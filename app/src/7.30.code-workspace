@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../zephyrproject"
+		},
+		{
+			"path": "../../standbytest"
+		},
+		{
+			"path": "../../pwmtest"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"pwm.h": "c",
+			"chrono": "c",
+			"__locale": "c"
+		}
+	}
+}

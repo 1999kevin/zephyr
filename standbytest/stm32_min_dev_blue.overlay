@@ -1,0 +1,15 @@
+&timers2 {
+	status = "okay";
+
+	pwm2: pwm {
+		status = "okay";
+	};
+};
+
+&timers4 {
+	status = "okay";
+
+	pwm4: pwm {
+		status = "okay";
+	};
+};
