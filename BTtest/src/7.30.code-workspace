@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../../standbytest"
+		},
+		{
+			"path": "../../pwmtest"
 		}
 	],
 	"settings": {
