@@ -36,6 +36,7 @@ struct read_in_buffer {
 
 void uart_fifo_callback(struct device *dev);
 int uart_fifo_init(void);
+void printk_buf(struct read_in_buffer buffer);
 
 
 const struct uart_config cfg = {
@@ -48,19 +49,13 @@ const struct uart_config cfg = {
 
 struct device *dev;
 
-uint8_t read_in_buf[20]={0};
+uint8_t read_in_buf[10]={0};
 
 struct read_in_buffer buf = {
 	.buf = read_in_buf,
 	.size = 0
 };
 
-void main(void)
-{
-	uart_fifo_init();
-	printk("here\n");
-
-}
 
 int uart_fifo_init(void){
 	uint8_t c;
@@ -69,10 +64,13 @@ int uart_fifo_init(void){
 		printk("cannot find device\n");
 		return -1;
 	}
-	if(uart_configure(dev, &cfg) != 0){
-		printk("configure error\n");
-	}
-	printk("configure succuessfully\n");
+	// if(uart_configure(dev, &cfg) != 0){
+	// 	printk("configure error\n");
+	// }
+	// printk("configure succuessfully\n");
+
+	uart_irq_rx_disable(dev);
+	uart_irq_tx_disable(dev);
 		
 	uart_irq_callback_set(dev, uart_fifo_callback);
 
@@ -94,30 +92,83 @@ int uart_fifo_init(void){
 
 }
 
-void uart_fifo_callback(struct device *dev){
-	printk("come to callback\n");
-	uint8_t byte[4];
-	int rx;
-
-	uart_irq_update(dev);
-
-	if (!uart_irq_rx_ready(dev)) {
-		return;
+void printk_buf(struct read_in_buffer buffer){
+	printk("buffer content:");
+	for(int i=0;i<buffer.size;i++){
+		printk("0x%02x ",buffer.buf[i]);
 	}
-	// int i=0;
-	printk("ready to read\n");
-	while (true) {
-		rx = uart_fifo_read(dev, &buf.buf[buf.size], 1);
-		printk("rx:%d\n",rx);
-		if (rx != 1) {
-			break;
-		}
-	}
-	buf.size++;
-	printk("callback end\n");
-	printk("byte: 0x%02x 0x%02x 0x%02x\n",buf.buf[0], buf.buf[1],buf.buf[2]);
-	// printk("byte :0x%02x, 0x%02x,0x%02x,0x%02x\n",read_in_buf[0],read_in_buf[1],read_in_buf[2],read_in_buf[3]);
-
+	printk("\n");
 }
 
+void uart_fifo_callback(struct device *dev){
+	// uart_irq_update(dev);
 
+	// if (!uart_irq_rx_ready(dev)) {
+	// 	return;
+	// }
+	// int i=0;
+	printk("ready to read\n");
+
+	while(uart_irq_update(dev) && uart_irq_is_pending(dev)){
+		if (!uart_irq_rx_ready(dev)){
+			continue;
+		}
+		else{
+			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], 10);
+			printk("buf.size:%d\n",buf.size);
+			// int rx = uart_poll_in(dev,&buf.buf[buf.size]);
+			// printk("rx:%d\n",rx);
+			// buf.size++;
+			// k_msleep(50);
+		}
+
+		printk("while1\n");
+	}
+
+	// printk("callback end\n");
+	// printk_buf(buf);
+	int UART_REC_BUF_MAX=10;
+	// // if ( uart_irq_update(dev) && uart_irq_rx_ready(dev) ){
+	while (uart_irq_update(dev) && uart_irq_rx_ready(dev) ) {                    
+		buf.size += uart_fifo_read(dev, &buf.buf[buf.size], UART_REC_BUF_MAX);    
+		printk("buf.size:%d\n",buf.size);    
+		printk("while1\n");        
+	}  
+	// }
+	printk_buf(buf);
+}
+
+// static void uart4_isr(struct device * nu){    
+// 	if ( uart_irq_update(uart4_dev) && uart_irq_rx_ready(uart4_dev) )  {        
+// 		if( uart_start_receive_flag == 0 ) {            
+// 			uart_clear_received();        
+// 		}else{           
+// 			if( uart_receive_index < uart_receive_length ) {                   
+// 				while (uart_irq_update(uart4_dev) && uart_irq_rx_ready(uart4_dev) ) {                    
+// 					uart_receive_index += uart_fifo_read(uart4_dev, &uart_receive_buf[uart_receive_index], UART_REC_BUF_MAX);                
+// 				}                       
+// 			} else {                
+// 				uart_clear_received();           
+// 			}       
+// 		}   
+// 	}
+// }
+
+
+// int voltage_telegram_ready(struct read_in_buffer buffer){
+// 	int len = buffer.buf[2]*16*16+buffer.buf[3];
+// 	if(buffer.size != len){
+// 		printk("invalid telegram in size checking");
+// 		return -1;
+// 	}
+// 	return 0;
+// }
+
+void main(void)
+{
+	uart_fifo_init();
+	printk("here\n");
+
+	// voltage_telegram_ready(struct read_in_buffer)
+
+}

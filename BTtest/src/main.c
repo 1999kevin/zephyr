@@ -108,3 +108,4 @@ void voltage_message_format_convert(struct voltage_message *msg, unsigned char* 
 	printk("buf[0]:0x%02x \n",buf[0]);
 }
 
+
