@@ -2,6 +2,8 @@
 
 struct device *dev;
 
+uint8_t read_in_buf[20]={0};
+
 
 struct read_in_buffer buf = {
 	.buf = read_in_buf,
@@ -9,6 +11,8 @@ struct read_in_buffer buf = {
 };
 
 struct ring_buf_container telegram_queue;
+
+
 
 const struct uart_config cfg = {
 	.baudrate = 115200,

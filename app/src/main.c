@@ -15,9 +15,6 @@
 
 // uint8_t* buf = "deliver message\n";
 
-
-uint8_t read_in_buf[20]={0};
-
 void main(void)
 {
 

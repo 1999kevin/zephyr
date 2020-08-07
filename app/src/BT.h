@@ -40,10 +40,6 @@ extern struct read_in_buffer buf;
 extern struct ring_buf_container telegram_queue;
 
 
-
-
-
-
 void uart_fifo_callback(struct device *dev);
 int uart_fifo_init(void);
 void printk_buf(struct read_in_buffer buffer);
