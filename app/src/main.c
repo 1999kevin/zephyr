@@ -13,10 +13,11 @@
 #include <sys/printk.h>
 #include <device.h>
 #include <drivers/uart.h>
-#include "BT.h"
+#include <sys/ring_buffer.h>
 
 
 // uint8_t* buf = "deliver message\n";
+#define MY_RING_BUF_SIZE 64
 
 struct voltage_message {
 	/* data */
@@ -33,11 +34,18 @@ struct read_in_buffer {
 	int size;
 };
 
+struct ring_buf_container {
+    struct ring_buf rb;
+    uint8_t buffer[MY_RING_BUF_SIZE];
+
+};
 
 void uart_fifo_callback(struct device *dev);
 int uart_fifo_init(void);
 void printk_buf(struct read_in_buffer buffer);
-
+int voltage_telegram_ready(struct read_in_buffer buffer);
+void clear_voltage_buf(void);
+int pull_one_message(uint8_t *data);
 
 const struct uart_config cfg = {
 	.baudrate = 115200,
@@ -56,6 +64,7 @@ struct read_in_buffer buf = {
 	.size = 0
 };
 
+struct ring_buf_container telegram_queue;
 
 int uart_fifo_init(void){
 	uint8_t c;
@@ -120,6 +129,14 @@ void uart_fifo_callback(struct device *dev){
 			// printk("rx:%d\n",rx);
 			// buf.size++;
 			// k_msleep(50);
+			if (buf.buf[0] != 27){
+				clear_voltage_buf();
+			}
+			if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
+				int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
+				printk("enqueue:%d\n",ret);
+				clear_voltage_buf();
+			}
 		}
 
 		printk("while1\n");
@@ -127,48 +144,87 @@ void uart_fifo_callback(struct device *dev){
 
 	// printk("callback end\n");
 	// printk_buf(buf);
-	int UART_REC_BUF_MAX=10;
+	// int UART_REC_BUF_MAX=10;
 	// // if ( uart_irq_update(dev) && uart_irq_rx_ready(dev) ){
-	while (uart_irq_update(dev) && uart_irq_rx_ready(dev) ) {                    
-		buf.size += uart_fifo_read(dev, &buf.buf[buf.size], UART_REC_BUF_MAX);    
-		printk("buf.size:%d\n",buf.size);    
-		printk("while1\n");        
-	}  
+	// while (uart_irq_update(dev) && uart_irq_rx_ready(dev) ) {                    
+	// 	buf.size += uart_fifo_read(dev, &buf.buf[buf.size], UART_REC_BUF_MAX);    
+	// 	printk("buf.size:%d\n",buf.size);    
+	// 	printk("while1\n");        
+	// }  
 	// }
 	printk_buf(buf);
+
+	if(buf.size>20){
+		clear_voltage_buf();
+	}
 }
 
-// static void uart4_isr(struct device * nu){    
-// 	if ( uart_irq_update(uart4_dev) && uart_irq_rx_ready(uart4_dev) )  {        
-// 		if( uart_start_receive_flag == 0 ) {            
-// 			uart_clear_received();        
-// 		}else{           
-// 			if( uart_receive_index < uart_receive_length ) {                   
-// 				while (uart_irq_update(uart4_dev) && uart_irq_rx_ready(uart4_dev) ) {                    
-// 					uart_receive_index += uart_fifo_read(uart4_dev, &uart_receive_buf[uart_receive_index], UART_REC_BUF_MAX);                
-// 				}                       
-// 			} else {                
-// 				uart_clear_received();           
-// 			}       
-// 		}   
-// 	}
-// }
+
+void clear_voltage_buf(void){
+	buf.size = 0;
+}
 
 
-// int voltage_telegram_ready(struct read_in_buffer buffer){
-// 	int len = buffer.buf[2]*16*16+buffer.buf[3];
-// 	if(buffer.size != len){
-// 		printk("invalid telegram in size checking");
-// 		return -1;
-// 	}
-// 	return 0;
-// }
+int voltage_telegram_ready(struct read_in_buffer buffer){
+	// struct voltage_message msg;
+	int len = buffer.buf[2]*16*16+buffer.buf[3];
+	if(buffer.size != len){
+		printk("invalid telegram in size checking\n");
+		return -1;
+	}
+	int data = buffer.buf[6]*16*16+buffer.buf[7];
+	return data;
+}
+
+
+int pull_one_message(uint8_t *data){
+	// uint8_t *ret_data;
+	uint32_t size=0;
+	while(!ring_buf_is_empty(&telegram_queue.rb)){
+		printk("try to get message\n");
+		size+=ring_buf_get(&telegram_queue.rb,&data[size],1);
+		printk("size:%d\n",size);
+		if (size>2 && data[size-1]==177 && data[size-2]==177){
+			break;
+		}
+	}
+	printk("data[size-1]:%d\n",data[size-1]);
+	if (size>2 && data[size-1]==177 && data[size-2]==177){
+		return size;
+	}else{
+		printk("no complete message in queue\n");
+		return -1;
+	}
+}
 
 void main(void)
 {
-	uart_fifo_init();
+
 	printk("here\n");
 
 	// voltage_telegram_ready(struct read_in_buffer)
+    ring_buf_init(&telegram_queue.rb, MY_RING_BUF_SIZE , telegram_queue.buffer);
+	uart_fifo_init();
 
+	uint8_t data[20];
+	// uint8_t *print_data = data;
+	while(1){
+		int size = pull_one_message(data);
+		printk("ret:%d\n",size);
+		if(size>0){
+			printk("get data: %d\n",data[0]);
+		}else{
+			printk("waiting for data, free space:%d\n",ring_buf_space_get(&telegram_queue.rb));
+		}
+		k_msleep(5000);
+	}
+
+
+	uint8_t *messgae="message";
+	uint8_t ret_data[8];
+	int ret=ring_buf_put(&telegram_queue.rb,messgae,7);
+	printk("enqueue:%d\n",ret);
+	ret=ring_buf_get(&telegram_queue.rb,ret_data,7);
+	printk("ret:%d\n",ret);
+	printk("ret:data:%s\n",ret_data);
 }
