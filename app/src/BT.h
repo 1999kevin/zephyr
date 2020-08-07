@@ -1,6 +1,12 @@
 #ifndef __BT_H_
 #define __BT_H_
 
+#include <device.h>
+#include <sys/printk.h>
+#include <drivers/uart.h>
+#include <sys/ring_buffer.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,6 +33,14 @@ struct ring_buf_container {
     uint8_t buffer[MY_RING_BUF_SIZE];
 
 };
+
+extern struct device *dev;
+extern uint8_t read_in_buf[];
+extern struct read_in_buffer buf;
+extern struct ring_buf_container telegram_queue;
+
+
+
 
 
 
