@@ -15,37 +15,11 @@
 #include <drivers/uart.h>
 #include <sys/ring_buffer.h>
 
+#include "BT.h"
+
 
 // uint8_t* buf = "deliver message\n";
-#define MY_RING_BUF_SIZE 64
 
-struct voltage_message {
-	/* data */
-	uint16_t SOF;
-	uint16_t len;
-	uint16_t cmd;
-	uint16_t data;
-	uint8_t crc;
-	uint16_t EOF;
-};
-
-struct read_in_buffer {
-	uint8_t *buf;
-	int size;
-};
-
-struct ring_buf_container {
-    struct ring_buf rb;
-    uint8_t buffer[MY_RING_BUF_SIZE];
-
-};
-
-void uart_fifo_callback(struct device *dev);
-int uart_fifo_init(void);
-void printk_buf(struct read_in_buffer buffer);
-int voltage_telegram_ready(struct read_in_buffer buffer);
-void clear_voltage_buf(void);
-int pull_one_message(uint8_t *data);
 
 const struct uart_config cfg = {
 	.baudrate = 115200,
@@ -57,7 +31,7 @@ const struct uart_config cfg = {
 
 struct device *dev;
 
-uint8_t read_in_buf[10]={0};
+uint8_t read_in_buf[20]={0};
 
 struct read_in_buffer buf = {
 	.buf = read_in_buf,
