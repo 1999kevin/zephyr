@@ -23,6 +23,18 @@ struct voltage_message {
 	uint16_t EOF;
 };
 
+struct pwm_message {
+	/* data */
+	uint16_t SOF;
+	uint16_t len;
+	uint16_t cmd;
+	uint16_t freq;
+	uint16_t duty_cycle;
+	uint16_t duration;
+	uint8_t crc;
+	uint16_t EOF;
+};
+
 struct read_in_buffer {
 	uint8_t *buf;
 	int size;
@@ -46,6 +58,7 @@ void printk_buf(struct read_in_buffer buffer);
 int voltage_telegram_ready(struct read_in_buffer buffer);
 void clear_voltage_buf(void);
 int pull_one_message(uint8_t *data);
+int is_telegram_correct(uint8_t *data, uint32_t size);
 
 #ifdef __cplusplus
 }

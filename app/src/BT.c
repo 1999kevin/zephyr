@@ -122,15 +122,36 @@ void clear_voltage_buf(void){
 }
 
 
-int voltage_telegram_ready(struct read_in_buffer buffer){
+int is_telegram_correct(uint8_t *data, uint32_t size){
 	// struct voltage_message msg;
-	int len = buffer.buf[2]*16*16+buffer.buf[3];
-	if(buffer.size != len){
-		printk("invalid telegram in size checking\n");
-		return -1;
+	int len;
+	uint8_t check_value;
+	if (size == 11){
+		len = data[2]*16*16+data[3];
+		if (len != size){
+			printk("voltage message size error\n");
+			return -1;
+		}
+		check_value = data[2]*16*16+data[3]+data[4]*16*16+data[5]+data[6]*16*16+data[7];
+		if(check_value == data[8]){
+			return size;
+		}else{
+			printk("voltage message check value error\n");
+		}
+	}else if (size == 15){
+		len = data[2]*16*16+data[3];
+		if (len != size){
+			printk("pwm message size error\n");
+			return -1;
+		}
+		check_value = data[2]*16*16+data[3]+data[4]*16*16+data[5]+data[6]*16*16+data[7]+data[8]*16*16+data[9]+data[10]*16*16+data[11];
+		if(check_value == data[12]){
+			return size;
+		}else{
+			printk("pwm message check value error\n");
+		}
 	}
-	int data = buffer.buf[6]*16*16+buffer.buf[7];
-	return data;
+	return -1;
 }
 
 
@@ -147,7 +168,7 @@ int pull_one_message(uint8_t *data){
 	}
 	printk("data[size-1]:%d\n",data[size-1]);
 	if (size>2 && data[size-1]==177 && data[size-2]==177){
-		return size;
+		return is_telegram_correct(data,size);
 	}else{
 		printk("no complete message in queue\n");
 		return -1;

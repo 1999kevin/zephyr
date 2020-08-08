@@ -1,3 +1,11 @@
 &usart2 {
 	status = "okay";
 };
+
+&timers4 {
+	status = "okay";
+
+	pwm4: pwm {
+		status = "okay";
+	};
+};
