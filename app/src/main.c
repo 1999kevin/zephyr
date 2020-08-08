@@ -30,9 +30,10 @@ void main(void)
 
 	uint8_t data[20];
 	// uint8_t *print_data = data;
+	int size;
 	while(1){
-		int size = pull_one_message(data);
-		printk("ret:%d\n",size);
+		size = pull_one_message(data);
+		// printk("ret:%d\n",size);
 		if(size>0){
 			printk("get data: %d\n",data[0]);
 			break;
@@ -42,29 +43,40 @@ void main(void)
 		k_msleep(5000);
 	}
 
-	uint16_t voltage = data[6]*16*16+data[7];
-	printk("voltage:%d\n", voltage);
+	if(size == 11){
+		printk("get a voltage message\n");
+		uint16_t voltage = data[6]*16*16+data[7];
+		printk("voltage:%d\n", voltage);
+	}else if(size == 15){
+		printk("get a pwm message\n");
+		uint16_t period = data[6]*16*16+data[7];
+		uint16_t pulse = data[8]*16*16+data[9];
+		uint16_t duration = data[10]*16*16+data[11];
 
-	struct device *pwm4;
-	// uint32_t period;
-	int ret;
-	printk("PWM-based blinky\n");
-	const char* label4 = "PWM_4";
-	pwm4 = device_get_binding(label4);
-	if (!pwm4) {
-		printk("Error: didn't find %s device\n", label4);
-		return;
+		printk("period: %d, pulse: %d, duration: %d\n", period, pulse, duration);
+
+		struct device *pwm4;
+		// uint32_t period;
+		int ret;
+		printk("PWM-based blinky\n");
+		const char* label4 = "PWM_4";
+		pwm4 = device_get_binding(label4);
+		if (!pwm4) {
+			printk("Error: didn't find %s device\n", label4);
+			return;
+		}
+		printk("%s correct\n", label4);
+
+		uint64_t cycles;
+		ret = pwm_get_cycles_per_sec(pwm4,1, &cycles);
+
+		printk("clock rate: %lld\n",cycles);
+		ret = pwm_pin_set_usec(pwm4,1, period, pulse, PWM_FLAGS);
+		if(ret < 0){
+			printk("error %d\n",ret);
+		}
+		printk("set %s,channel 1, successfully\n",label4);
 	}
-	printk("%s correct\n", label4);
 
-	uint64_t cycles;
-	ret = pwm_get_cycles_per_sec(pwm4,1, &cycles);
-
-	printk("clock rate: %lld\n",cycles);
-	ret = pwm_pin_set_usec(pwm4,1, PERIOD, PERIOD*0.01, PWM_FLAGS);
-	if(ret < 0){
-		printk("error %d\n",ret);
-	}
-	printk("set %s,channel 1, successfully\n",label4);
 
 }

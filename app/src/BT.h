@@ -28,8 +28,8 @@ struct pwm_message {
 	uint16_t SOF;
 	uint16_t len;
 	uint16_t cmd;
-	uint16_t freq;
-	uint16_t duty_cycle;
+	uint16_t period; //in unit of us
+	uint16_t pulse;
 	uint16_t duration;
 	uint8_t crc;
 	uint16_t EOF;
