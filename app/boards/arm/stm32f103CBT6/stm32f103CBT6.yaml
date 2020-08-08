@@ -1,0 +1,12 @@
+identifier: stm3f103CBT6
+name: STM32CBT6 Board
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+ram: 20
+supported:
+  - pwm
+  - adc

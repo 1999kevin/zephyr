@@ -1,0 +1,6 @@
+# STM32F103CBT6 board Configuration
+
+config BOARD_STM32F103CBT6
+	bool "STM32F103CBT6"
+	depends on SOC_STM32F103XB
+
