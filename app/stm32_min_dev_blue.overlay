@@ -7,5 +7,6 @@
 
 	pwm4: pwm {
 		status = "okay";
+		st,prescaler = <1000>;
 	};
 };
