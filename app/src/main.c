@@ -103,12 +103,34 @@ void main(void)
 	if (ret < 0) {
 		return;
 	}
-	gpio_pin_set(dev, 13, (int)led_is_on);
+	ret = gpio_pin_set(dev, 13, (int)led_is_on);
+	printk("system on status: %d\n", ret);
+
 	ret = gpio_pin_configure(dev, 14, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
 		return;
 	}
-	gpio_pin_set(dev, 14, (int)led_is_on);
+	ret = gpio_pin_set(dev, 14, (int)led_is_on);
+	printk("led power on status: %d\n", ret);
+	
+	
+	// ret = gpio_pin_configure(dev, 10, GPIO_OUTPUT_ACTIVE | FLAGS);
+	// if (ret < 0) {
+	// 	return;
+	// }
+	// ret = gpio_pin_set(dev, 10, (int)led_is_on);
+	// printk("led1_en status:%d\n",ret);
+	// ret = gpio_pin_configure(dev, 11, GPIO_OUTPUT_ACTIVE | FLAGS);
+	// if (ret < 0) {
+	// 	return;
+	// }
+	// ret = gpio_pin_set(dev, 11, (int)led_is_on);
+	// printk("led1_en status:%d\n",ret);
+
+
+
+
+
 
 	printk("here2\n");
 
@@ -128,7 +150,7 @@ void main(void)
 	ret = pwm_get_cycles_per_sec(pwm4,1, &cycles);
 
 	printk("clock rate: %lld\n",cycles);
-	ret = pwm_pin_set_usec(pwm4, 2, 10000, 10000, PWM_FLAGS);
+	ret = pwm_pin_set_usec(pwm4, 2, 10000, 1000, PWM_FLAGS);
 	if(ret < 0){
 		printk("error %d\n",ret);
 	}
