@@ -12,9 +12,14 @@
 #include <zephyr.h>
 #include "BT.h"
 #include <drivers/pwm.h>
+#include <drivers/gpio.h>
 
 
 // uint8_t* buf = "deliver message\n";
+
+
+#define FLAGS	0
+
 
 #define PERIOD   10000
 #define DUTY_CYCLE 0.01
@@ -76,12 +81,40 @@ void main(void)
 	// 		printk("error %d\n",ret);
 	// 	}
 	// 	printk("set %s,channel 1, successfully\n",label4);
-	// }
+	// }	dev = device_get_binding("GPIOB");
 
+	struct device *dev;
+	bool led_is_on = true;
+	int ret;
+
+
+	dev = device_get_binding("GPIOB");
+
+	if (dev == NULL) {
+		return;
+	}
+
+	// int pin10 = 13;
+	// int pin11 = 11;
+
+	// printk("pin:%d\n",PIN);
+
+	ret = gpio_pin_configure(dev, 13, GPIO_OUTPUT_ACTIVE | FLAGS);
+	if (ret < 0) {
+		return;
+	}
+	gpio_pin_set(dev, 13, (int)led_is_on);
+	ret = gpio_pin_configure(dev, 14, GPIO_OUTPUT_ACTIVE | FLAGS);
+	if (ret < 0) {
+		return;
+	}
+	gpio_pin_set(dev, 14, (int)led_is_on);
+
+	printk("here2\n");
 
 	struct device *pwm4;
 	// uint32_t period;
-	int ret;
+
 	printk("PWM-based blinky\n");
 	const char* label4 = "PWM_4";
 	pwm4 = device_get_binding(label4);
@@ -95,7 +128,7 @@ void main(void)
 	ret = pwm_get_cycles_per_sec(pwm4,1, &cycles);
 
 	printk("clock rate: %lld\n",cycles);
-	ret = pwm_pin_set_usec(pwm4,1, 10000, 10000*0.0008, PWM_FLAGS);
+	ret = pwm_pin_set_usec(pwm4, 2, 10000, 10000, PWM_FLAGS);
 	if(ret < 0){
 		printk("error %d\n",ret);
 	}
