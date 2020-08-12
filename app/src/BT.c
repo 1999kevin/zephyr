@@ -2,7 +2,7 @@
 
 struct device *dev;
 
-uint8_t read_in_buf[100]={0};
+uint8_t read_in_buf[MAX_LINE_LENGTH]={0};
 
 
 struct read_in_buffer buf = {
@@ -58,10 +58,18 @@ int uart_fifo_init(void){
 
 }
 
-void printk_buf(struct read_in_buffer buffer){
+void printk_buf_hex(struct read_in_buffer buffer){
 	printk("buffer content:");
 	for(int i=0;i<buffer.size;i++){
 		printk("0x%02x ",buffer.buf[i]);
+	}
+	printk("\n");
+}
+
+void printk_buf_str(struct read_in_buffer buffer){
+	printk("buffer content:");
+	for(int i=0;i<buffer.size;i++){
+		printk("%c",buffer.buf[i]);
 	}
 	printk("\n");
 }
@@ -75,34 +83,24 @@ void uart_fifo_callback(struct device *dev){
 	// int i=0;
 	// printk("ready to read\n");
 
-	uint32_t start_time;
-	uint32_t stop_time;
-	uint32_t cycles_spent;
-	uint32_t nanoseconds_spent;
-
 	// start_time = k_cycle_get_32();
 	while(uart_irq_update(dev) && uart_irq_is_pending(dev)){
 		if (!uart_irq_rx_ready(dev)){
 			continue;
 		}
 		else{
-			start_time = k_cycle_get_32();
-			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], 100);
-			stop_time = k_cycle_get_32();
-			printk("buf.size:%d\n",buf.size);
-			printk("reading value: %d\n",buf.buf[buf.size]);
-			// int rx = uart_poll_in(dev,&buf.buf[buf.size]);
-			// printk("rx:%d\n",rx);
-			// buf.size++;
+			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], MAX_LINE_LENGTH);
+			// printk("buf.size:%d\n",buf.size);
+			// printk("reading value: %d\n",buf.buf[buf.size-1]);
 			// k_msleep(50);
 			// if (buf.buf[0] != 27){
 			// 	clear_voltage_buf();
 			// }
-			// if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
-			// 	int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
-			// 	// printk("enqueue:%d\n",ret);
-			// 	clear_voltage_buf();
-			// }
+			if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
+				int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
+				printk("enqueue:%d\n",ret);
+				clear_voltage_buf();
+			}
 		}
 
 		// printk("while1\n");
@@ -121,11 +119,9 @@ void uart_fifo_callback(struct device *dev){
 	// }
 	// printk_buf(buf);
 
-	cycles_spent = stop_time - start_time;
-	nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(cycles_spent);
-	printk("time in ns:%d\n",nanoseconds_spent);
 
-	if(buf.size>20){
+	if(buf.size>MAX_LINE_LENGTH){
+		printk("buf overfit\n");
 		clear_voltage_buf();
 	}
 }

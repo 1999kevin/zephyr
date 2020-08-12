@@ -82,7 +82,7 @@ void main(void)
 	while(1){
 		uart_poll_out_multi(dev_UART2, msg, 9);
 		k_msleep(100);
-		printk_buf(buf);
+		printk_buf_str(buf);
 		k_msleep(2000);
 	}
 

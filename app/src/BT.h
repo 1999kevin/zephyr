@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #define MY_RING_BUF_SIZE 64
+#define MAX_LINE_LENGTH 128
 
 struct voltage_message {
 	/* data */
@@ -54,7 +55,8 @@ extern struct ring_buf_container telegram_queue;
 
 void uart_fifo_callback(struct device *dev);
 int uart_fifo_init(void);
-void printk_buf(struct read_in_buffer buffer);
+void printk_buf_hex(struct read_in_buffer buffer);
+void printk_buf_str(struct read_in_buffer buffer);
 int voltage_telegram_ready(struct read_in_buffer buffer);
 void clear_voltage_buf(void);
 int pull_one_message(uint8_t *data);
