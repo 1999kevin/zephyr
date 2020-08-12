@@ -69,33 +69,26 @@ void printk_buf_hex(struct read_in_buffer buffer){
 void printk_buf_str(struct read_in_buffer buffer){
 	printk("buffer content:");
 	for(int i=0;i<buffer.size;i++){
-		printk("%c",buffer.buf[i]);
+		if(buffer.buf[i]>32 && buffer.buf[i]<127){
+			printk("%c",buffer.buf[i]);
+		}
 	}
 	printk("\n");
 }
 
 void uart_fifo_callback(struct device *dev){
-	// uart_irq_update(dev);
-
-	// if (!uart_irq_rx_ready(dev)) {
-	// 	return;
-	// }
-	// int i=0;
-	// printk("ready to read\n");
-
-	// start_time = k_cycle_get_32();
 	while(uart_irq_update(dev) && uart_irq_is_pending(dev)){
 		if (!uart_irq_rx_ready(dev)){
 			continue;
 		}
 		else{
 			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], MAX_LINE_LENGTH);
-			// printk("buf.size:%d\n",buf.size);
-			// printk("reading value: %d\n",buf.buf[buf.size-1]);
-			// k_msleep(50);
-			// if (buf.buf[0] != 27){
-			// 	clear_voltage_buf();
-			// }
+			if (buf.size>=2 && buf.buf[buf.size-1]== 27 && buf.buf[buf.size-2]== 27){
+				clear_voltage_buf();
+				buf.buf[0] = 27;
+				buf.buf[1] = 27;
+				buf.size = 2;
+			}
 			if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
 				int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
 				printk("enqueue:%d\n",ret);
@@ -103,22 +96,7 @@ void uart_fifo_callback(struct device *dev){
 			}
 		}
 
-		// printk("while1\n");
-		// k_usleep(1);
 	}
-
-	// printk("callback end\n");
-	// printk_buf(buf);
-	// int UART_REC_BUF_MAX=10;
-	// // if ( uart_irq_update(dev) && uart_irq_rx_ready(dev) ){
-	// while (uart_irq_update(dev) && uart_irq_rx_ready(dev) ) {                    
-	// 	buf.size += uart_fifo_read(dev, &buf.buf[buf.size], UART_REC_BUF_MAX);    
-	// 	printk("buf.size:%d\n",buf.size);    
-	// 	printk("while1\n");        
-	// }  
-	// }
-	// printk_buf(buf);
-
 
 	if(buf.size>MAX_LINE_LENGTH){
 		printk("buf overfit\n");
@@ -169,9 +147,9 @@ int pull_one_message(uint8_t *data){
 	// uint8_t *ret_data;
 	uint32_t size=0;
 	while(!ring_buf_is_empty(&telegram_queue.rb)){
-		printk("try to get message\n");
+		// printk("try to get message\n");
 		size+=ring_buf_get(&telegram_queue.rb,&data[size],1);
-		printk("size:%d\n",size);
+		// printk("size:%d\n",size);
 		if (size>2 && data[size-1]==177 && data[size-2]==177){
 			break;
 		}
