@@ -59,6 +59,7 @@ int voltage_telegram_ready(struct read_in_buffer buffer);
 void clear_voltage_buf(void);
 int pull_one_message(uint8_t *data);
 int is_telegram_correct(uint8_t *data, uint32_t size);
+void uart_poll_out_multi(struct device *dev, unsigned char* str, int len);
 
 #ifdef __cplusplus
 }

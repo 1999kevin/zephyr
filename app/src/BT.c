@@ -2,7 +2,7 @@
 
 struct device *dev;
 
-uint8_t read_in_buf[20]={0};
+uint8_t read_in_buf[100]={0};
 
 
 struct read_in_buffer buf = {
@@ -30,10 +30,10 @@ int uart_fifo_init(void){
 		printk("cannot find device\n");
 		return -1;
 	}
-	// if(uart_configure(dev, &cfg) != 0){
-	// 	printk("configure error\n");
-	// }
-	// printk("configure succuessfully\n");
+	if(uart_configure(dev, &cfg) != 0){
+		printk("configure error\n");
+	}
+	printk("configure succuessfully\n");
 
 	uart_irq_rx_disable(dev);
 	uart_irq_tx_disable(dev);
@@ -73,30 +73,40 @@ void uart_fifo_callback(struct device *dev){
 	// 	return;
 	// }
 	// int i=0;
-	printk("ready to read\n");
+	// printk("ready to read\n");
 
+	uint32_t start_time;
+	uint32_t stop_time;
+	uint32_t cycles_spent;
+	uint32_t nanoseconds_spent;
+
+	// start_time = k_cycle_get_32();
 	while(uart_irq_update(dev) && uart_irq_is_pending(dev)){
 		if (!uart_irq_rx_ready(dev)){
 			continue;
 		}
 		else{
-			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], 10);
+			start_time = k_cycle_get_32();
+			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], 100);
+			stop_time = k_cycle_get_32();
 			printk("buf.size:%d\n",buf.size);
+			printk("reading value: %d\n",buf.buf[buf.size]);
 			// int rx = uart_poll_in(dev,&buf.buf[buf.size]);
 			// printk("rx:%d\n",rx);
 			// buf.size++;
 			// k_msleep(50);
-			if (buf.buf[0] != 27){
-				clear_voltage_buf();
-			}
-			if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
-				int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
-				printk("enqueue:%d\n",ret);
-				clear_voltage_buf();
-			}
+			// if (buf.buf[0] != 27){
+			// 	clear_voltage_buf();
+			// }
+			// if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
+			// 	int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
+			// 	// printk("enqueue:%d\n",ret);
+			// 	clear_voltage_buf();
+			// }
 		}
 
-		printk("while1\n");
+		// printk("while1\n");
+		// k_usleep(1);
 	}
 
 	// printk("callback end\n");
@@ -109,7 +119,11 @@ void uart_fifo_callback(struct device *dev){
 	// 	printk("while1\n");        
 	// }  
 	// }
-	printk_buf(buf);
+	// printk_buf(buf);
+
+	cycles_spent = stop_time - start_time;
+	nanoseconds_spent = SYS_CLOCK_HW_CYCLES_TO_NS(cycles_spent);
+	printk("time in ns:%d\n",nanoseconds_spent);
 
 	if(buf.size>20){
 		clear_voltage_buf();
@@ -172,5 +186,12 @@ int pull_one_message(uint8_t *data){
 	}else{
 		printk("no complete message in queue\n");
 		return -1;
+	}
+}
+
+
+void uart_poll_out_multi(struct device *dev, unsigned char* str, int len){
+	for (int i=0; i<len;i++){
+		uart_poll_out(dev, *str++);
 	}
 }
