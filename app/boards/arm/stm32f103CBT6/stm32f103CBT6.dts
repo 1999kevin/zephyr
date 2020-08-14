@@ -35,7 +35,16 @@
 
 	pwm1: pwm {
 		status = "okay";
-		st,prescaler = <1000>;
+		st,prescaler = <100>;
+	};
+};
+
+&timers2 {
+	status = "okay";
+
+	pwm2: pwm {
+		status = "okay";
+		st,prescaler = <100>;
 	};
 };
 
@@ -44,7 +53,7 @@
 
 	pwm4: pwm {
 		status = "okay";
-		st,prescaler = <1000>;
+		st,prescaler = <100>;
 	};
 };
 

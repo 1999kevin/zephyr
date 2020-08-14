@@ -88,34 +88,34 @@ void main(void)
 
 	/* wait for bluetooth to connect */
 	// int size;
-	// uint8_t* ask_msg = "AT:RSSI?\r\n";
+	// // uint8_t* ask_msg = "AT:RSSI?\r\n";
 
-	while(1){
-		ret = gpio_pin_get(dev_GPIOA, 6);
-		if(ret == 0){
-			break;
-		}
-		else{
-			printk("bluetooth not connected\n");
-		}
-		// uart_poll_out_multi(dev_UART2, ask_msg, 10);
-		k_msleep(1000);
-		// printk_buf_str(buf);
-		// k_msleep(2000);
-		// printk_buf_str(buf);
+	// while(1){
+	// 	ret = gpio_pin_get(dev_GPIOA, 6);
+	// 	if(ret == 0){
+	// 		break;
+	// 	}
+	// 	else{
+	// 		printk("bluetooth not connected\n");
+	// 	}
+	// 	// uart_poll_out_multi(dev_UART2, ask_msg, 10);
+	// 	k_msleep(1000);
+	// 	// printk_buf_str(buf);
+	// 	// k_msleep(2000);
+	// 	// printk_buf_str(buf);
 
-	}
-	printk("bluetooth connected\n");
-	k_msleep(5000);
+	// }
+	// printk("bluetooth connected\n");
+	// k_msleep(5000);
 
-	/* obtain voltage meeage */
-	float result = 0;
-	ret = adc_channel_setup(dev_ADC1, &adc_ch_cfg);
-	// printk("here2\n");
-	if (ret != 0) {
-		printk("Setting up of adc channel failed with code %d\n", ret);
-		return;
-	}
+	// // /* obtain voltage meeage */
+	// float result = 0;
+	// ret = adc_channel_setup(dev_ADC1, &adc_ch_cfg);
+	// // printk("here2\n");
+	// if (ret != 0) {
+	// 	printk("Setting up of adc channel failed with code %d\n", ret);
+	// 	return;
+	// }
 
 	// while(1){
 	// 	if(adc_read(dev_ADC1,&sequence) < 0){
@@ -133,31 +133,31 @@ void main(void)
 	// }
 
 
-	if(adc_read(dev_ADC1,&sequence) < 0){
-		printk("cannot read value\n");
-	}else{
-		result = buffer[0]/4096.0*3300.0*2.0;
-		// printk("result:%d\n",(int)result);
-		printk("voltage:\n");
-		// voltage_result = (int)(result*3300.0/4096.0*2.0);
-		PrintFloat(result);
-		printk("mV\n");
-	}
+	// if(adc_read(dev_ADC1,&sequence) < 0){
+	// 	printk("cannot read value\n");
+	// }else{
+	// 	result = buffer[0]/4096.0*3300.0*2.0;
+	// 	// printk("result:%d\n",(int)result);
+	// 	printk("voltage:\n");
+	// 	// voltage_result = (int)(result*3300.0/4096.0*2.0);
+	// 	PrintFloat(result);
+	// 	printk("mV\n");
+	// }
 
-	/* transmit voltage message */
-	struct voltage_message msg;
-	compose_message(&msg,(int)(result));
+	// /* transmit voltage message */
+	// struct voltage_message msg;
+	// compose_message(&msg,(int)(result));
 
-	unsigned char voltage_buf[15]={0};
-	voltage_message_format_convert(&msg,voltage_buf);
-	// uart_poll_out(dev, 'a');
-	printk("char 0: %d\n",*voltage_buf);
-	uart_poll_out_multi(dev_UART2,voltage_buf, msg.len);
-	printk("send out telegraph\n");
+	// unsigned char voltage_buf[15]={0};
+	// voltage_message_format_convert(&msg,voltage_buf);
+	// // uart_poll_out(dev, 'a');
+	// printk("char 0: %d\n",*voltage_buf);
+	// uart_poll_out_multi(dev_UART2,voltage_buf, msg.len);
+	// printk("send out telegraph\n");
 
 	/* wait for pwm message */
 	uint8_t data[20];
-	// uint8_t* msg = "AT:MAC?\r\n";
+	uint8_t* msg = "AT:MAC?\r\n";
 
 	int size;
 	while(1){
