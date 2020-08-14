@@ -52,14 +52,6 @@ void main(void)
 	}
 	ret = gpio_pin_set(dev_GPIOB, 13, (int)led_is_on);
 	printk("system on status: %d\n", ret);
-
-	/* set led power on */
-	ret = gpio_pin_configure(dev_GPIOB, 14, GPIO_OUTPUT_ACTIVE | FLAGS);
-	if (ret < 0) {
-		return;
-	}
-	ret = gpio_pin_set(dev_GPIOB, 14, (int)led_is_on);
-	printk("led power on status: %d\n", ret);
 	
 	/* set bluetooth working */
 	ret = gpio_pin_configure(dev_GPIOA, 7, GPIO_OUTPUT_ACTIVE | FLAGS);
@@ -77,14 +69,14 @@ void main(void)
 	ret = gpio_pin_set(dev_GPIOA, 5, 1);
 	printk("bluetooth mode:%d\n",ret);
 
-	/* set BAT_EN on */
-	ret = gpio_pin_configure(dev_GPIOA, 1, GPIO_OUTPUT_ACTIVE | FLAGS);
-	if (ret < 0) {
-		printk("get out from here\n");
-		return;
-	}
-	ret = gpio_pin_set(dev_GPIOA, 1, 1);
-	printk("BAT_EN:%d\n",ret);
+	// /* set BAT_EN on */
+	// ret = gpio_pin_configure(dev_GPIOA, 1, GPIO_OUTPUT_ACTIVE | FLAGS);
+	// if (ret < 0) {
+	// 	printk("get out from here\n");
+	// 	return;
+	// }
+	// ret = gpio_pin_set(dev_GPIOA, 1, 1);
+	// printk("BAT_EN:%d\n",ret);
 
 
 
@@ -96,7 +88,7 @@ void main(void)
 
 	/* wait for bluetooth to connect */
 	// int size;
-	uint8_t* ask_msg = "AT:RSSI?\r\n";
+	// uint8_t* ask_msg = "AT:RSSI?\r\n";
 
 	while(1){
 		ret = gpio_pin_get(dev_GPIOA, 6);
@@ -113,30 +105,48 @@ void main(void)
 		// printk_buf_str(buf);
 
 	}
-
+	printk("bluetooth connected\n");
+	k_msleep(5000);
 
 	/* obtain voltage meeage */
-	int voltage_result = 0;
+	float result = 0;
 	ret = adc_channel_setup(dev_ADC1, &adc_ch_cfg);
 	// printk("here2\n");
 	if (ret != 0) {
 		printk("Setting up of adc channel failed with code %d\n", ret);
 		return;
 	}
-	// printk("here2\n");
+
+	// while(1){
+	// 	if(adc_read(dev_ADC1,&sequence) < 0){
+	// 		printk("cannot read value\n");
+	// 	}else{
+	// 		float result = buffer[0];
+	// 		result = result/4096.0*3300.0*2.0;
+	// 		// printk("result:%d\n",(int)result);
+	// 		printk("voltage:%d\n",buffer[0]);
+	// 		// voltage_result = (int)(result*3300.0/4096.0*2.0);
+	// 		PrintFloat(result);
+	// 		printk("mV\n");
+	// 	}
+	// 	k_msleep(1000);
+	// }
+
+
 	if(adc_read(dev_ADC1,&sequence) < 0){
 		printk("cannot read value\n");
 	}else{
-		float result = buffer[0];
-		// printk("voltage:");
-		voltage_result = (int)(result*3300/4096);
-		// printk("mV\n");
+		result = buffer[0]/4096.0*3300.0*2.0;
+		// printk("result:%d\n",(int)result);
+		printk("voltage:\n");
+		// voltage_result = (int)(result*3300.0/4096.0*2.0);
+		PrintFloat(result);
+		printk("mV\n");
 	}
 
 	/* transmit voltage message */
 	struct voltage_message msg;
-
-	compose_message(&msg,voltage_result);
+	compose_message(&msg,(int)(result));
 
 	unsigned char voltage_buf[15]={0};
 	voltage_message_format_convert(&msg,voltage_buf);
@@ -145,68 +155,111 @@ void main(void)
 	uart_poll_out_multi(dev_UART2,voltage_buf, msg.len);
 	printk("send out telegraph\n");
 
-
-	// uint8_t data[20];
+	/* wait for pwm message */
+	uint8_t data[20];
 	// uint8_t* msg = "AT:MAC?\r\n";
 
-	// int size;
-	// while(1){
+	int size;
+	while(1){
 
-	// 	// uart_poll_out_multi(dev_UART2, msg, 9);
-	// 	// k_msleep(100);
+		// uart_poll_out_multi(dev_UART2, msg, 9);
+		// k_msleep(100);
+		// printk_buf_str(buf);
+	// 	// k_msleep(2000);
 	// 	// printk_buf_str(buf);
-	// // 	// k_msleep(2000);
-	// // 	// printk_buf_str(buf);
-	// // 	// printk("buf.size:%d\n",buf.size);  
-	// 	size = pull_one_message(data);
-	// 	// printk("ret:%d\n",size);
-	// 	if(size>0){
-	// 		printk("get data: %d\n",data[0]);
-	// 		printk("size: %d\n",size);
-	// 		break;
-	// 	}else{
-	// 		// printk("waiting for data, free space:%d\n",ring_buf_space_get(&telegram_queue.rb));
-	// 	}
-	// 	printk_buf_str(buf);
-	// 	k_msleep(5000);
+	// 	// printk("buf.size:%d\n",buf.size);  
+		size = pull_one_message(data);
+		// printk("ret:%d\n",size);
+		if(size>0){
+			printk("get data: %d\n",data[0]);
+			printk("size: %d\n",size);
+			break;
+		}else{
+			printk("waiting for data\n");
+		}
+		printk_buf_str(buf);
+		k_msleep(5000);
 
-	// }
+	}
+
+	/* set led power on */
+	ret = gpio_pin_configure(dev_GPIOB, 14, GPIO_OUTPUT_ACTIVE | FLAGS);
+	if (ret < 0) {
+		return;
+	}
+	ret = gpio_pin_set(dev_GPIOB, 14, (int)led_is_on);
+	printk("led power on status: %d\n", ret);
+
+	uint16_t period = 0;
+	uint16_t pulse = 0;
+	uint16_t duration = 0;
+	if(size == 11){
+		printk("get a voltage message\n");
+		uint16_t voltage = data[6]*16*16+data[7];
+		printk("voltage:%d\n", voltage);
+	}else if(size == 15){
+		printk("get a pwm message\n");
+		period = data[6]*16*16+data[7];
+		pulse = data[8]*16*16+data[9];
+		duration = data[10]*16*16+data[11];
+
+		printk("period: %d, pulse: %d, duration: %d\n", period, pulse, duration);
+	}
+
+		// uint32_t period;
+		// int ret;
+		// printk("PWM-based blinky\n");
+	const char* label4 = "PWM_4";
+	struct device *dev_pwm4 = device_get_binding(label4);
+	if (!dev_pwm4) {
+	printk("Error: didn't find %s device\n", label4);
+		return;
+	}
+	printk("%s correct\n", label4);
+
+	uint64_t cycles;
+	ret = pwm_get_cycles_per_sec(dev_pwm4,1, &cycles);
+
+	printk("clock rate: %lld\n",cycles);
+	ret = pwm_pin_set_usec(dev_pwm4,1, period, pulse, PWM_FLAGS);
+	if(ret < 0){
+		printk("error %d\n",ret);
+	}
+	printk("set %s,channel 1, successfully\n",label4);
+	ret = pwm_pin_set_usec(dev_pwm4,2, period, pulse, PWM_FLAGS);
+	if(ret < 0){
+		printk("error %d\n",ret);
+	}
+	printk("set %s,channel 2, successfully\n",label4);
 
 
-	// if(size == 11){
-	// 	printk("get a voltage message\n");
-	// 	uint16_t voltage = data[6]*16*16+data[7];
-	// 	printk("voltage:%d\n", voltage);
-	// }else if(size == 15){
-	// 	printk("get a pwm message\n");
-	// 	uint16_t period = data[6]*16*16+data[7];
-	// 	uint16_t pulse = data[8]*16*16+data[9];
-	// 	uint16_t duration = data[10]*16*16+data[11];
 
-	// 	printk("period: %d, pulse: %d, duration: %d\n", period, pulse, duration);
+		// uint32_t period;
+		// int ret;
+		// printk("PWM-based blinky\n");
+	const char* label2 = "PWM_2";
+	struct device *dev_pwm2 = device_get_binding(label2);
+	if (!dev_pwm2) {
+		printk("Error: didn't find %s device\n", label2);
+		return;
+	}
+	printk("%s correct\n", label2);
 
+		// uint64_t cycles;
+		// ret = pwm_get_cycles_per_sec(dev_pwm4,1, &cycles);
 
-	// 	// uint32_t period;
-	// 	int ret;
-	// 	// printk("PWM-based blinky\n");
-	// 	const char* label4 = "PWM_4";
-	// 	struct device *dev_pwm4 = device_get_binding(label4);
-	// 	if (!dev_pwm4) {
-	// 		printk("Error: didn't find %s device\n", label4);
-	// 		return;
-	// 	}
-	// 	printk("%s correct\n", label4);
+		// printk("clock rate: %lld\n",cycles);
+	ret = pwm_pin_set_usec(dev_pwm2,3, period, pulse, PWM_FLAGS);
+	if(ret < 0){
+		printk("error %d\n",ret);
+	}
+	printk("set %s,channel 3, successfully\n",label2);
+	ret = pwm_pin_set_usec(dev_pwm2,4, period, pulse, PWM_FLAGS);
+	if(ret < 0){
+		printk("error %d\n",ret);
+	}
+	printk("set %s,channel 4, successfully\n",label2);
 
-	// 	uint64_t cycles;
-	// 	ret = pwm_get_cycles_per_sec(dev_pwm4,1, &cycles);
-
-	// 	printk("clock rate: %lld\n",cycles);
-	// 	ret = pwm_pin_set_usec(dev_pwm4,1, period, pulse, PWM_FLAGS);
-	// 	if(ret < 0){
-	// 		printk("error %d\n",ret);
-	// 	}
-	// 	printk("set %s,channel 1, successfully\n",label4);
-	// }
 	
 }
 

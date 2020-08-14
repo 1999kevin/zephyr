@@ -75,9 +75,39 @@ void main(void)
 	printk("set %s,channel 2, successfully\n",label4);
 
 
+	// struct device *pwm2;
+	// const char* label2 = "PWM_2";
+	// pwm2 = device_get_binding(label2);
+	// if (!pwm2) {
+	// 	printk("Error: didn't find %s device\n", label2);
+	// 	return;
+	// }
+	// printk("%s correct\n", label2);
+	// /*
+	//  * In case the default MAX_PERIOD_USEC value cannot be set for
+	//  * some PWM hardware, decrease its value until it can.
+	//  *
+	//  * Keep its value at least MIN_PERIOD_USEC * 4 to make sure
+	//  * the sample changes frequency at least once.
+	//  */
+	// // printk("Calibrating for device %s channel %d...\n",
+	// //        PWM_LABEL, PWM_CHANNEL);
+	// // period = 10000;
+	// ret = pwm_pin_set_usec(pwm2, 3, PERIOD, PERIOD*DUTY_CYCLE, PWM_FLAGS);
+	// if(ret < 0){
+	// 	printk("error %d\n",ret);
+	// }
+	// printk("set %s,channel 3, successfully\n",label2);
+	// ret = pwm_pin_set_usec(pwm2, 4, PERIOD, PERIOD*DUTY_CYCLE, PWM_FLAGS);
+	// if(ret < 0){
+	// 	printk("error %d\n",ret);
+	// }
+	// printk("set %s,channel 4, successfully\n",label2);
+
+
 	struct device *dev;
 	bool led_is_on = true;
-	// int ret;
+	int ret;
 
 	dev = device_get_binding("GPIOB");
 	if (dev == NULL) {

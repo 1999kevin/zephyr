@@ -53,15 +53,16 @@ void main(void)
 		printk("Setting up of adc channel failed with code %d\n", ret);
 		return;
 	}
-
-	if(adc_read(dev,&sequence) < 0){
-		printk("cannot read value\n");
-	}else{
-		float result = buffer[0];
-		printk("voltage:");
-		PrintFloat(result*3300/4096);
-		printk("mV\n");
-	}
+	while(1){
+		if(adc_read(dev,&sequence) < 0){
+			printk("cannot read value\n");
+		}else{
+			float result = buffer[0];
+			printk("voltage:");
+			PrintFloat(result*3300/4096);
+			printk("mV\n");
+		}
+		k_msleep(1000);
 
 }
 

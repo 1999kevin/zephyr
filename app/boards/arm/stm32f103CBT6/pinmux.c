@@ -87,6 +87,7 @@ static const struct pin_config pinconf[] = {
 #endif /* CONFIG_USB_DC_STM32 */
 #if DT_NODE_HAS_STATUS(DT_NODELABEL(adc1), okay) && CONFIG_ADC
 	{STM32_PIN_PA0, STM32F1_PINMUX_FUNC_PA0_ADC123_IN0},
+	{STM32_PIN_PA1, STM32F1_PINMUX_FUNC_PA1_ADC123_IN1},
 #endif
 };
 

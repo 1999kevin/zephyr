@@ -27,7 +27,7 @@ const struct adc_sequence sequence = {
 	.options = NULL,
 	.channels = BIT(1),
 	.buffer = buffer,
-	.buffer_size = 100,
+	.buffer_size = 10,
 	.resolution = 12
 };
 

@@ -35,6 +35,7 @@
 
 	pwm1: pwm {
 		status = "okay";
+		st,prescaler = <1000>;
 	};
 };
 
@@ -43,11 +44,14 @@
 
 	pwm4: pwm {
 		status = "okay";
+		st,prescaler = <1000>;
 	};
 };
 
-
-
 &adc1 {
+	status = "okay";
+};
+
+&usb {
 	status = "okay";
 };
