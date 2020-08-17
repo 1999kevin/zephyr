@@ -60,7 +60,3 @@
 &adc1 {
 	status = "okay";
 };
-
-&usb {
-	status = "okay";
-};
