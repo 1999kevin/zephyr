@@ -1,11 +1,6 @@
 
 #include "function.h"
 
-
-#define PERIOD   10000
-#define DUTY_CYCLE 0.01
-
-
 void main(void)
 {
 
@@ -13,26 +8,16 @@ void main(void)
 	// bool led_is_on = true;
 	int ret;
 
-
+	/* initiate system, bluetooth and ring buf */
 	ret = system_init();
 	if(ret < 0){
 		return;
 	}
 
-	/* initiate ring buf */
-    ring_buf_init(&telegram_queue.rb, MY_RING_BUF_SIZE , telegram_queue.buffer);
-	uart_fifo_init();
-
 
 	/* wait for bluetooth to connect */
-	while(1){
-		ret = gpio_pin_get(dev_GPIOA, 6);
-		if(ret == 0){
-			break;
-		}
-		else{
-			printk("bluetooth not connected\n");
-		}
+	while(!bluetooth_is_connected()){
+		printk("waiting for bluetooth to connect\n");
 		k_msleep(1000);
 	}
 	printk("bluetooth connected\n");

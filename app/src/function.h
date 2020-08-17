@@ -28,12 +28,14 @@ void PrintFloat(float value);
 int compose_message(struct voltage_message *msg, uint16_t voltage);
 void voltage_message_format_convert(struct voltage_message *msg, uint8_t *buf);
 int system_init(void);
+bool bluetooth_is_connected(void);
 float get_voltage(void);
 void transmit_voltage_message(int voltage);
 void set_led_power_on(void);
 void decode_pwm_message(uint8_t* data, uint16_t *period,uint16_t *pulse, uint16_t *duration);
 void decode_voltage_message(uint8_t* data, uint16_t *voltage);
 int set_pwm_to_led(uint16_t period, uint16_t pulse, uint16_t duration);
+int send_inst_to_bluetooth(uint8_t *msg,int size);
 
 
 
