@@ -1,6 +1,7 @@
 #ifndef __BT_H_
 #define __BT_H_
 
+#include <zephyr.h>
 #include <device.h>
 #include <sys/printk.h>
 #include <drivers/uart.h>
