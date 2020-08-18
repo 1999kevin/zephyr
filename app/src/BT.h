@@ -14,6 +14,10 @@ extern "C" {
 
 #define MY_RING_BUF_SIZE 64
 #define MAX_LINE_LENGTH 128
+#define VOLTAGE_MESSAGE_LENGTH 11
+#define PWM_MESSAGE_LENGTH 15
+#define SOF_CHAR 0xb1
+#define EOF_CHAR 0x1b
 
 struct voltage_message {
 	/* data */

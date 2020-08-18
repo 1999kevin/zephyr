@@ -12,6 +12,17 @@ extern "C" {
 
 #define FLAGS	0
 #define PWM_FLAGS	0
+#define PIN_HIGH 1
+#define PIN_LOW 0 
+
+/* GPIOA */
+#define BLUETOOTH_SLEEP_PIN 7
+#define BLUETOOTH_LINK_STATE_PIN 6
+#define BLUETOOTH_MODE_PIN 5
+
+/* GPIOB */
+#define SYS_ON_PIN 13
+#define LED_POWER_ON_PIN 14
 
 extern struct device *dev_GPIOA;
 extern struct device *dev_GPIOB;

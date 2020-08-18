@@ -13,7 +13,7 @@ static const struct adc_channel_cfg adc_ch_cfg = {
 	.differential  = 0
 };
 
-uint16_t adc_buffer[100] = {0};
+uint16_t adc_buffer[10] = {0};
 
 const struct adc_sequence sequence = {
 	.options = NULL,
@@ -41,33 +41,34 @@ int system_init(void){
 	}
 
 	/* set system on */
-	ret = gpio_pin_configure(dev_GPIOB, 13, GPIO_OUTPUT_ACTIVE | FLAGS);
+	ret = gpio_pin_configure(dev_GPIOB, SYS_ON_PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
 		return -1;
 	}
-	ret = gpio_pin_set(dev_GPIOB, 13, 1);
+	ret = gpio_pin_set(dev_GPIOB, SYS_ON_PIN, PIN_HIGH);
 	printk("system on status: %d\n", ret);
 	
-	/* set bluetooth working */
-	ret = gpio_pin_configure(dev_GPIOA, 7, GPIO_OUTPUT_ACTIVE | FLAGS);
+	/* set bluetooth no sleeping */
+	ret = gpio_pin_configure(dev_GPIOA, BLUETOOTH_SLEEP_PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
 		return -1;
 	}
-	ret = gpio_pin_set(dev_GPIOA, 7, 0);
+	ret = gpio_pin_set(dev_GPIOA, BLUETOOTH_SLEEP_PIN, PIN_LOW);
 	printk("bluetooth status:%d\n",ret);
 
 	/* set bluetooth slave mode */
-	ret = gpio_pin_configure(dev_GPIOA, 5, GPIO_OUTPUT_ACTIVE | FLAGS);
+	ret = gpio_pin_configure(dev_GPIOA, BLUETOOTH_MODE_PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
 		return -1;
 	}
-	ret = gpio_pin_set(dev_GPIOA, 5, 1);
+	ret = gpio_pin_set(dev_GPIOA, BLUETOOTH_MODE_PIN, PIN_HIGH);
 	printk("bluetooth mode:%d\n",ret);
-    return 0;
+
 
 	/* initiate ring buf */
     ring_buf_init(&telegram_queue.rb, MY_RING_BUF_SIZE , telegram_queue.buffer);
 	uart_fifo_init();
+	return 0;
 
 }
 
@@ -79,8 +80,8 @@ bool bluetooth_is_connected(void){
 		printk("not GPIOA found\n");
 		return false;
 	}
-	int ret = gpio_pin_get(dev_GPIOA, 6);
-	if(ret == 0){
+	int ret = gpio_pin_get(dev_GPIOA, BLUETOOTH_LINK_STATE_PIN);
+	if(ret == PIN_LOW){
 		return true;
 	}
 	return false;
@@ -135,11 +136,11 @@ void transmit_voltage_message(int voltage){
  */
 void set_led_power_on(void){
     int ret;
-    ret = gpio_pin_configure(dev_GPIOB, 14, GPIO_OUTPUT_ACTIVE | FLAGS);
+    ret = gpio_pin_configure(dev_GPIOB, LED_POWER_ON_PIN, GPIO_OUTPUT_ACTIVE | FLAGS);
 	if (ret < 0) {
 		return;
 	}
-	ret = gpio_pin_set(dev_GPIOB, 14, 1);
+	ret = gpio_pin_set(dev_GPIOB, LED_POWER_ON_PIN, PIN_HIGH);
 	printk("led power on status: %d\n", ret);
 }
 
@@ -151,12 +152,12 @@ void set_led_power_on(void){
 void PrintFloat(float value){
 	int tmp,tmp1,tmp2,tmp3,tmp4,tmp5,tmp6;
 	tmp = (int)value;
-	tmp1=(int)((value-tmp)*10)%10;
-	tmp2=(int)((value-tmp)*100)%10;
-	tmp3=(int)((value-tmp)*1000)%10;
-	tmp4=(int)((value-tmp)*10000)%10;
-	tmp5=(int)((value-tmp)*100000)%10;
-	tmp6=(int)((value-tmp)*1000000)%10;
+	tmp1=(int)((value-tmp) * 10) % 10;
+	tmp2=(int)((value-tmp) * 100) % 10;
+	tmp3=(int)((value-tmp) * 1000) % 10;
+	tmp4=(int)((value-tmp) * 10000) %10;
+	tmp5=(int)((value-tmp) * 100000) %10;
+	tmp6=(int)((value-tmp) * 1000000) %10;
 	printk("%d.%d%d%d%d%d%d ",tmp,tmp1,tmp2,tmp3,tmp4,tmp5,tmp6);
 
 }
@@ -167,9 +168,9 @@ void PrintFloat(float value){
  */ 
 void decode_pwm_message(uint8_t* data, uint16_t *period,uint16_t *pulse, uint16_t *duration){
     printk("get a pwm message\n");
-	*period = data[6]*16*16+data[7];
-	*pulse = data[8]*16*16+data[9];
-	*duration = data[10]*16*16+data[11];
+	*period = data[6] * 16 * 16 + data[7];
+	*pulse = data[8] * 16 * 16 + data[9];
+	*duration = data[10] * 16 * 16 + data[11];
     printk("period: %d, pulse: %d, duration: %d\n", *period, *pulse, *duration);
 }
 
@@ -179,7 +180,7 @@ void decode_pwm_message(uint8_t* data, uint16_t *period,uint16_t *pulse, uint16_
  */ 
 void decode_voltage_message(uint8_t* data, uint16_t *voltage){
     printk("get a voltage message\n");
-	*voltage = data[6]*16*16+data[7];
+	*voltage = data[6] * 16 * 16 + data[7];
 	printk("voltage:%d\n", *voltage);
 }
 
@@ -262,7 +263,7 @@ void voltage_message_format_convert(struct voltage_message *msg, unsigned char* 
  */
 int compose_message(struct voltage_message *msg, uint16_t voltage){
 	msg->SOF = 0xb1b1;
-	msg->len = 11;
+	msg->len = VOLTAGE_MESSAGE_LENGTH;
 	msg->cmd = 0;
 	msg->data = voltage;
 	msg->crc = msg->cmd+msg->data+msg->len;

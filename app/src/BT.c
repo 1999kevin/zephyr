@@ -23,6 +23,10 @@ const struct uart_config cfg = {
 };
 
 
+
+/* uart_fifo_init（）：
+ * This fucntion is used to initate uart2
+ */
 int uart_fifo_init(void){
 	uint8_t c;
 	dev = device_get_binding("UART_2");
@@ -53,44 +57,59 @@ int uart_fifo_init(void){
 	 * issue is fixed in upstream Zephyr.
 	 */
 	irq_unlock(0);
-
+	// printk("after intial\n");
 	return 0;
 
 }
 
+
+/* printk_buf_hex()
+ * This function would printk read_in_buffer in hex format
+ */
 void printk_buf_hex(struct read_in_buffer buffer){
 	printk("buffer content:");
-	for(int i=0;i<buffer.size;i++){
-		printk("0x%02x ",buffer.buf[i]);
+	for(int i=0; i<buffer.size; i++){
+		printk("0x%02x ", buffer.buf[i]);
 	}
 	printk("\n");
 }
 
+
+/* printk_buf_str()
+ * This function would printk read_in_buffer in text format
+ */
 void printk_buf_str(struct read_in_buffer buffer){
 	printk("buffer content:");
-	for(int i=0;i<buffer.size;i++){
-		if(buffer.buf[i]>32 && buffer.buf[i]<127){
+	for(int i=0; i<buffer.size; i++){
+		/* if it is a character */
+		if(buffer.buf[i] > 0x1F && buffer.buf[i] < 0x7F){
 			printk("%c",buffer.buf[i]);
 		}
 	}
 	printk("\n");
 }
 
+
+/* uart_fifo_callback（）：
+ * this function detect uart interrupt and read data into read_in_buf
+ * this function should be used after uart_fifo_init() and  ring_buf_init()
+ */
 void uart_fifo_callback(struct device *dev){
+	// printk("111\n");
 	while(uart_irq_update(dev) && uart_irq_is_pending(dev)){
 		if (!uart_irq_rx_ready(dev)){
 			continue;
 		}
 		else{
 			buf.size += uart_fifo_read(dev, &buf.buf[buf.size], MAX_LINE_LENGTH);
-			if (buf.size>=2 && buf.buf[buf.size-1]== 27 && buf.buf[buf.size-2]== 27){
+			if (buf.size >= 2 && buf.buf[buf.size-1] == SOF_CHAR && buf.buf[buf.size-2] == SOF_CHAR){
 				clear_voltage_buf();
-				buf.buf[0] = 27;
-				buf.buf[1] = 27;
+				buf.buf[0] = SOF_CHAR;
+				buf.buf[1] = SOF_CHAR;
 				buf.size = 2;
 			}
-			if(buf.size>=2 && buf.buf[buf.size-1]==177 && buf.buf[buf.size-2]==177){
-				int ret=ring_buf_put(&telegram_queue.rb,buf.buf,buf.size);
+			if(buf.size >= 2 && buf.buf[buf.size-1] == EOF_CHAR && buf.buf[buf.size-2] == EOF_CHAR){
+				int ret=ring_buf_put(&telegram_queue.rb, buf.buf, buf.size);
 				printk("enqueue:%d\n",ret);
 				clear_voltage_buf();
 			}
@@ -104,35 +123,41 @@ void uart_fifo_callback(struct device *dev){
 	}
 }
 
-
+/* this function would clear read_in_buf */
 void clear_voltage_buf(void){
 	buf.size = 0;
 }
 
-
+/* this function would check whether we have a valid telegram*/
 int is_telegram_correct(uint8_t *data, uint32_t size){
 	// struct voltage_message msg;
 	int len;
 	uint8_t check_value;
-	if (size == 11){
-		len = data[2]*16*16+data[3];
+	if (size == VOLTAGE_MESSAGE_LENGTH){
+		len = data[2] * 16 * 16 + data[3];
 		if (len != size){
 			printk("voltage message size error\n");
 			return -1;
 		}
-		check_value = data[2]*16*16+data[3]+data[4]*16*16+data[5]+data[6]*16*16+data[7];
+		check_value = data[2] * 16 * 16 + data[3]
+					 +data[4] * 16 * 16 + data[5]
+					 +data[6] * 16 * 16 + data[7];
 		if(check_value == data[8]){
 			return size;
 		}else{
 			printk("voltage message check value error\n");
 		}
-	}else if (size == 15){
-		len = data[2]*16*16+data[3];
+	}else if (size == PWM_MESSAGE_LENGTH){
+		len = data[2] * 16 * 16 + data[3];
 		if (len != size){
 			printk("pwm message size error\n");
 			return -1;
 		}
-		check_value = data[2]*16*16+data[3]+data[4]*16*16+data[5]+data[6]*16*16+data[7]+data[8]*16*16+data[9]+data[10]*16*16+data[11];
+		check_value = data[2] * 16 * 16 + data[3]
+		             +data[4] * 16 * 16 + data[5]
+					 +data[6] * 16 * 16 + data[7]
+					 +data[8] * 16 * 16 + data[9]
+					 +data[10]* 16 * 16 + data[11];
 		if(check_value == data[12]){
 			return size;
 		}else{
@@ -142,7 +167,7 @@ int is_telegram_correct(uint8_t *data, uint32_t size){
 	return -1;
 }
 
-
+/* this function would pull out one message from ring_buf */
 int pull_one_message(uint8_t *data){
 	// uint8_t *ret_data;
 	uint32_t size=0;
@@ -150,12 +175,12 @@ int pull_one_message(uint8_t *data){
 		// printk("try to get message\n");
 		size+=ring_buf_get(&telegram_queue.rb,&data[size],1);
 		// printk("size:%d\n",size);
-		if (size>2 && data[size-1]==177 && data[size-2]==177){
+		if (size > 2 && data[size-1] == EOF_CHAR && data[size-2] == EOF_CHAR){
 			break;
 		}
 	}
 	printk("data[size-1]:%d\n",data[size-1]);
-	if (size>2 && data[size-1]==177 && data[size-2]==177){
+	if (size>2 && data[size-1] == EOF_CHAR && data[size-2] == EOF_CHAR){
 		return is_telegram_correct(data,size);
 	}else{
 		printk("no complete message in queue\n");
@@ -163,9 +188,9 @@ int pull_one_message(uint8_t *data){
 	}
 }
 
-
+/* poll out string */
 void uart_poll_out_multi(struct device *dev, unsigned char* str, int len){
-	for (int i=0; i<len;i++){
+	for (int i=0; i<len; i++){
 		uart_poll_out(dev, *str++);
 	}
 }
