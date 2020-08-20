@@ -1,0 +1,11 @@
+identifier: stm32f030K6T6
+name: STM32F030K6T6 Board
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+ram: 20
+supported:
+  - adc

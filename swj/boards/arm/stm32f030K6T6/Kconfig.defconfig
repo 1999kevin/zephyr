@@ -1,0 +1,10 @@
+# STM32F030K6T6 Configuration
+
+if BOARD_STM32F030K6T6
+
+config BOARD
+	default "stm32f030K6T6" 
+
+endif # BOARD_STM32F030K6T6
+
+

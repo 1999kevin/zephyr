@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) 2017, embedjournal.com
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <mem.h>
+#include <st/f0/stm32f030.dtsi>
+
+
+/ {
+	sram0: memory@20000000 {
+		reg = <0x20000000 DT_SIZE_K(4)>;
+	};
+
+	soc {
+		flash-controller@40022000 {
+			flash0: flash@8000000 {
+				reg = <0x08000000 DT_SIZE_K(16)>;
+			};
+		};
+	};
+};
+
+/ {
+	model = "STM32F030K6T6";
+	compatible = "st,stm32f030K6T6", "st,stm32f030X6";
+
+	chosen {
+		zephyr,console = &usart1;
+		zephyr,shell-uart = &usart1;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+};
+
+
+&usart1 {
+	current-speed = <115200>;
+	status = "okay";
+};
+
+&adc1 {
+	status = "okay";
+};

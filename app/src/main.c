@@ -14,13 +14,14 @@ void main(void)
 		return;
 	}
 
-	while(1){
-		uint8_t* msg = "AT:MAC?\r\n";
-		uart_poll_out_multi(dev_UART2, msg, 9);
-		k_msleep(1000);
-		printk_buf_str(buf);
+	// while(1){
+	// 	uint8_t* msg = "AT:MAC?\r\n";
+	// 	uart_poll_out_multi(dev_UART2, msg, 9);
+	// 	k_msleep(1000);
+	// 	printk_buf_str(buf);
 
-	}
+	// }
+	
 	/* wait for bluetooth to connect */
 	while(!bluetooth_is_connected()){
 		printk("waiting for bluetooth to connect\n");
@@ -36,7 +37,7 @@ void main(void)
 		return;
 	}
 
-	// /* transmit voltage message */
+	/* transmit voltage message */
 	transmit_voltage_message((int)voltage_result);
 
 
