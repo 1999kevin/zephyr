@@ -1,4 +1,6 @@
 # zephyr
+Author: 刘柯\\
+Date: 2020年8月\\
 这个项目是用来测试zephyr的pwm，adc， gpio以及蓝牙模块等功能，其中BTtest，pwmtest，standbytest， voltagetest文件夹是在stm32_min_dev_blue(STM32F103C8T6)开发板上单独测试不同功能，app文件夹是将所有功能集合起来并在STM32f103CBT6开发板上运行。
 
 ## app
