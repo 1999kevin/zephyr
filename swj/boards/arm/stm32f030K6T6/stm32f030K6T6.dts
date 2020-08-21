@@ -17,7 +17,7 @@
 	soc {
 		flash-controller@40022000 {
 			flash0: flash@8000000 {
-				reg = <0x08000000 DT_SIZE_K(16)>;
+				reg = <0x08000000 DT_SIZE_K(32)>;
 			};
 		};
 	};
@@ -25,7 +25,7 @@
 
 / {
 	model = "STM32F030K6T6";
-	compatible = "st,stm32f030K6T6", "st,stm32f030X6";
+	compatible = "st,stm32f030K6T6", "st,stm32f030x6";
 
 	chosen {
 		zephyr,console = &usart1;

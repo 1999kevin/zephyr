@@ -2,5 +2,5 @@
 
 config BOARD_STM32F030K6T6
 	bool "STM32F030K6T6"
-	depends on SOC_STM32F030X6
+	depends on SOC_STM32F030X4
 
